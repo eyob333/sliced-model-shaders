@@ -3,7 +3,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
+import slicedVertexShader from './shader/sliced/vertex.glsl'
+import slicedFragmentShader from './shader/sliced/fragment.glsl'
+
 import GUI from 'lil-gui'
+
 
 /**
  * Base
@@ -41,24 +46,39 @@ rgbeLoader.load('./aerodynamics_workshop.hdr', (environmentMap) =>
  * Sliced model
  */
 
-let gear = null
-
-gltfLoader.load('./gears.glb', (model) =>{
-
-    gear = model.scene
-    console.log(gear)
-    scene.add(gear)
-})
-// Geometry
-const geometry = new THREE.IcosahedronGeometry(2.5, 5)
-
 // Material
-const material = new THREE.MeshStandardMaterial({
+const depthMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.5,
     roughness: 0.25,
     envMapIntensity: 0.5,
     color: '#858080'
 })
+const slicedMaterial = new CustomShaderMaterial({
+    baseMaterial: new THREE.MeshStandardMaterial,
+    metalness: 0.5,
+    roughness: 0.25,
+    envMapIntensity: 0.5,
+    color: '#858080'
+})
+
+let gear = null
+
+gltfLoader.load('./gears.glb', (model) =>{
+
+    gear = model.scene
+    gear.traverse( (child) => {
+        if( child.isMesh){
+            child.material = slicedMaterial         
+            child.castShadow = true         
+            child.receiveShadow = true        
+        }
+    })
+
+    scene.add(gear)
+} , () =>{
+    console.log('loading model')
+})
+
 
 // Mesh
 // const mesh = new THREE.Mesh(geometry, material)
@@ -154,11 +174,15 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
+    // model update
+    if ( gear)
+        gear.rotation.y = elapsedTime * 0.1
+
     // Update controls
     controls.update()
 
-    // model update
-    
+
+
 
     // Render
     renderer.render(scene, camera)
