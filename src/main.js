@@ -14,7 +14,7 @@ import GUI from 'lil-gui'
  * Base
  */
 // Debug
-const gui = new GUI({ width: 325 })
+const gui = new GUI({ width: 325 })//.close()
 const debugObject = {}
 
 // Canvas
@@ -36,7 +36,6 @@ gltfLoader.setDRACOLoader(dracoLoader)
 rgbeLoader.load('./aerodynamics_workshop.hdr', (environmentMap) =>
 {
     environmentMap.mapping = THREE.EquirectangularReflectionMapping
-
     scene.background = environmentMap
     scene.backgroundBlurriness = 0.5
     scene.environment = environmentMap
@@ -47,14 +46,17 @@ rgbeLoader.load('./aerodynamics_workshop.hdr', (environmentMap) =>
  */
 
 // Material
-const depthMaterial = new THREE.MeshStandardMaterial({
+const Material = new THREE.MeshStandardMaterial({
     metalness: 0.5,
     roughness: 0.25,
     envMapIntensity: 0.5,
     color: '#858080'
 })
+
 const slicedMaterial = new CustomShaderMaterial({
-    baseMaterial: new THREE.MeshStandardMaterial,
+    baseMaterial: THREE.MeshStandardMaterial,
+    vertexShader: slicedVertexShader,
+    fragmentShader: slicedFragmentShader,
     metalness: 0.5,
     roughness: 0.25,
     envMapIntensity: 0.5,
@@ -62,16 +64,19 @@ const slicedMaterial = new CustomShaderMaterial({
 })
 
 let gear = null
-
 gltfLoader.load('./gears.glb', (model) =>{
 
     gear = model.scene
     gear.traverse( (child) => {
         if( child.isMesh){
-            child.material = slicedMaterial         
-            child.castShadow = true         
-            child.receiveShadow = true        
+            if (child.name === 'outerHull'){
+                child.material = slicedMaterial                 
+            } else{
+                child.material = Material
+            }      
         }
+        child.castShadow = true         
+        child.receiveShadow = true
     })
 
     scene.add(gear)
@@ -180,9 +185,6 @@ const tick = () =>
 
     // Update controls
     controls.update()
-
-
-
 
     // Render
     renderer.render(scene, camera)
