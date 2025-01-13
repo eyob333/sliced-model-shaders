@@ -15,7 +15,9 @@ void main(){
     if ( angle > 0. && angle < SliceArc)
         discard;
 
-    if (!gl_FrontFacing)
-        csm_DiffuseColor = vec4( 0.75, 0.15, 0.1, 1.);
+    float csm_Slice;
+
+    // if (!gl_FrontFacing)
+    //     csm_FragColor = vec4( 0.75, 0.15, 0.1, 1.);
     // csm_DiffuseColor *= vec4(vec3(angle), 1.0);
 }

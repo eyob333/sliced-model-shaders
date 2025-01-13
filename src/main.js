@@ -54,6 +54,16 @@ const uniforms = {
 gui.add( uniforms.uSliceStart, 'value').min(-Math.PI).max(Math.PI).step(0.0001).name('uSliceStart')
 gui.add( uniforms.uSliceArc, 'value').min(0).max(Math.PI * 2).step(0.001).name('uSliceArc')
 
+const patchMap = {
+    csm_Slice: {
+        '#include <colorspace_fragment>': `
+            #include <colorspace_fragment>
+
+            if (!gl_FrontFacing)
+            gl_FragColor = vec4( 0.75, 0.15, 0.1, 1.);
+        `
+    }
+}
 
 // Material
 const Material = new THREE.MeshStandardMaterial({
@@ -67,10 +77,11 @@ const slicedDepthMaterial = new CustomShaderMaterial({
     baseMaterial: THREE.MeshStandardMaterial,
     vertexShader: slicedVertexShader,
     fragmentShader: slicedFragmentShader,
-    metalness: 0.5,
+    uniforms,
+    side: THREE.DoubleSide,
+    metalness: 0.7,
     roughness: 0.25,
     envMapIntensity: 0.5,
-    color: '#858080'
 })
 
 const slicedMaterial = new CustomShaderMaterial({
@@ -79,10 +90,11 @@ const slicedMaterial = new CustomShaderMaterial({
     fragmentShader: slicedFragmentShader,
     uniforms,
     side: THREE.DoubleSide,
-    metalness: 0.5,
+    metalness: 0.7,
     roughness: 0.25,
     envMapIntensity: 0.5,
-    color: '#858080'
+    color: '#858080',
+    patchMap
 })
 
 let gear = null
@@ -90,15 +102,17 @@ gltfLoader.load('./gears.glb', (model) =>{
 
     gear = model.scene
     gear.traverse( (child) => {
+        console.log(child)
         if( child.isMesh){
             if (child.name === 'outerHull'){
-                child.material = slicedMaterial                 
+                child.material = slicedMaterial           
             } else{
                 child.material = Material
             }      
         }
         child.castShadow = true         
         child.receiveShadow = true
+        child.CustomShaderMaterial = slicedDepthMaterial
     })
 
     scene.add(gear)
