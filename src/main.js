@@ -73,17 +73,6 @@ const Material = new THREE.MeshStandardMaterial({
     color: '#858080'
 })
 
-const slicedDepthMaterial = new CustomShaderMaterial({
-    baseMaterial: THREE.MeshStandardMaterial,
-    vertexShader: slicedVertexShader,
-    fragmentShader: slicedFragmentShader,
-    uniforms,
-    side: THREE.DoubleSide,
-    metalness: 0.7,
-    roughness: 0.25,
-    envMapIntensity: 0.5,
-})
-
 const slicedMaterial = new CustomShaderMaterial({
     baseMaterial: THREE.MeshStandardMaterial,
     vertexShader: slicedVertexShader,
@@ -97,27 +86,36 @@ const slicedMaterial = new CustomShaderMaterial({
     patchMap
 })
 
+const slicedDepthMaterial = new CustomShaderMaterial({
+    baseMaterial: THREE.MeshDepthMaterial,
+    vertexShader: slicedVertexShader,
+    fragmentShader: slicedFragmentShader,
+    uniforms,
+    patchMap,
+    depthPacking: THREE.RGBADepthPacking
+})
+
 let gear = null
 gltfLoader.load('./gears.glb', (model) =>{
 
     gear = model.scene
     gear.traverse( (child) => {
-        console.log(child)
         if( child.isMesh){
             if (child.name === 'outerHull'){
-                child.material = slicedMaterial           
+                child.material = slicedMaterial         
+                child.customDepthMaterial = slicedDepthMaterial          
             } else{
                 child.material = Material
             }      
         }
         child.castShadow = true         
         child.receiveShadow = true
-        child.CustomShaderMaterial = slicedDepthMaterial
+
     })
 
     scene.add(gear)
 } , () =>{
-    console.log('loading model')
+    // console.log('loading model')
 })
 
 
